@@ -483,6 +483,87 @@
         .leaflet-control-locate a:hover {
             background-color: #f4f4f4;
         }
+
+        /* Nouveaux styles pour les quartiers */
+        .district-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 200px;
+        }
+
+        .district-controls h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .district-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .district-toggle input {
+            margin: 0;
+        }
+
+        .district-toggle label {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .filter-toggle input {
+            margin: 0;
+        }
+
+        .filter-toggle label {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .district-legend {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .legend-color.high {
+            background: #ef4444;
+        }
+
+        .legend-color.medium {
+            background: #f59e0b;
+        }
+
+        .legend-color.low {
+            background: #10b981;
+        }
     </style>
 </head>
 <body>
@@ -514,6 +595,32 @@
             <button class="control-btn" onclick="findNearestParking()">📍 Plus proche</button>
             <button class="control-btn my-location" onclick="locateMe()">🎯 Ma position</button>
             <button class="control-btn" onclick="toggleSimulation()">⚡ Simulation</button>
+        </div>
+    </div>
+
+    <div class="district-controls">
+        <h3>🛣️ Quartiers</h3>
+        <div class="district-toggle">
+            <input type="checkbox" id="showDistricts" checked onchange="toggleDistricts()">
+            <label for="showDistricts">Afficher les quartiers</label>
+        </div>
+        <div class="filter-toggle">
+            <input type="checkbox" id="showOnlyAvailable" onchange="toggleAvailableFilter()">
+            <label for="showOnlyAvailable">Places disponibles uniquement</label>
+        </div>
+        <div class="district-legend">
+            <div class="legend-item">
+                <div class="legend-color high"></div>
+                <span>Forte fréquentation</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color medium"></div>
+                <span>Fréquentation moyenne</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color low"></div>
+                <span>Faible fréquentation</span>
+            </div>
         </div>
     </div>
 
@@ -554,9 +661,45 @@
         let watchId = null;
         let routingControl = null;
         let currentNavigationSpot = null;
+        let districtLayers = [];
+        let showOnlyAvailable = false;
 
         // Coordonnées de Liège, Belgique
         const cityCenter = [50.6292, 5.5797];
+
+        // Définition des quartiers de Liège
+        const districts = [
+            {
+                name: "Centre-ville",
+                bounds: [[50.635, 5.565], [50.645, 5.585]],
+                occupancy: 0.8 // 80% d'occupation
+            },
+            {
+                name: "Outremeuse",
+                bounds: [[50.640, 5.585], [50.650, 5.600]],
+                occupancy: 0.6 // 60% d'occupation
+            },
+            {
+                name: "Guillemins",
+                bounds: [[50.625, 5.565], [50.635, 5.580]],
+                occupancy: 0.7 // 70% d'occupation
+            },
+            {
+                name: "Sainte-Marguerite",
+                bounds: [[50.645, 5.555], [50.655, 5.575]],
+                occupancy: 0.4 // 40% d'occupation
+            },
+            {
+                name: "Bressoux",
+                bounds: [[50.650, 5.590], [50.660, 5.610]],
+                occupancy: 0.5 // 50% d'occupation
+            },
+            {
+                name: "Angleur",
+                bounds: [[50.610, 5.590], [50.625, 5.610]],
+                occupancy: 0.3 // 30% d'occupation
+            }
+        ];
 
         // Attendre que Leaflet soit chargé
         function initMap() {
@@ -598,6 +741,7 @@
 
             generateParkingSpots();
             displayParkingSpots();
+            createDistricts();
             
             // Démarrer la localisation automatique
             setTimeout(locateMe, 1000);
@@ -619,7 +763,33 @@
                 { id: 12, name: "Place Xavier Neujean", lat: 50.6405, lng: 5.5825 },
                 { id: 13, name: "Rue de la Régence", lat: 50.6418, lng: 5.5668 },
                 { id: 14, name: "Boulevard Piercot", lat: 50.6355, lng: 5.5792 },
-                { id: 15, name: "Rue Saint-Gilles", lat: 50.6448, lng: 5.5742 }
+                { id: 15, name: "Rue Saint-Gilles", lat: 50.6448, lng: 5.5742 },
+                // 25 emplacements supplémentaires à Liège
+                { id: 16, name: "Place Cockerill", lat: 50.6475, lng: 5.5725 },
+                { id: 17, name: "Rue de l'Université", lat: 50.6420, lng: 5.5675 },
+                { id: 18, name: "Quai Mativa", lat: 50.6360, lng: 5.5820 },
+                { id: 19, name: "Rue de Serbie", lat: 50.6330, lng: 5.5750 },
+                { id: 20, name: "Place des Déportés", lat: 50.6480, lng: 5.5780 },
+                { id: 21, name: "Rue de Campine", lat: 50.6500, lng: 5.5830 },
+                { id: 22, name: "Boulevard Frère-Orban", lat: 50.6340, lng: 5.5700 },
+                { id: 23, name: "Rue de la Loi", lat: 50.6390, lng: 5.5650 },
+                { id: 24, name: "Place du 20-Août", lat: 50.6410, lng: 5.5800 },
+                { id: 25, name: "Rue de la Cathédrale Sud", lat: 50.6430, lng: 5.5750 },
+                { id: 26, name: "Quai de Rome", lat: 50.6320, lng: 5.5800 },
+                { id: 27, name: "Rue de la Madeleine", lat: 50.6490, lng: 5.5750 },
+                { id: 28, name: "Place Saint-Jacques", lat: 50.6450, lng: 5.5700 },
+                { id: 29, name: "Rue de la Wache", lat: 50.6400, lng: 5.5850 },
+                { id: 30, name: "Boulevard de la Constitution", lat: 50.6310, lng: 5.5850 },
+                { id: 31, name: "Rue de la Montagne", lat: 50.6460, lng: 5.5650 },
+                { id: 32, name: "Place de la Cathédrale", lat: 50.6440, lng: 5.5770 },
+                { id: 33, name: "Rue de la Casquette", lat: 50.6380, lng: 5.5790 },
+                { id: 34, name: "Quai de la Dérivation", lat: 50.6350, lng: 5.5840 },
+                { id: 35, name: "Rue du Palais", lat: 50.6470, lng: 5.5790 },
+                { id: 36, name: "Place de la République Française", lat: 50.6430, lng: 5.5680 },
+                { id: 37, name: "Rue des Clarisses", lat: 50.6480, lng: 5.5810 },
+                { id: 38, name: "Boulevard Raymond Poincaré", lat: 50.6320, lng: 5.5900 },
+                { id: 39, name: "Rue de la Régence Sud", lat: 50.6400, lng: 5.5670 },
+                { id: 40, name: "Place du Théâtre", lat: 50.6450, lng: 5.5720 }
             ];
 
             parkingSpots = spots.map(spot => ({
@@ -691,6 +861,11 @@
             let occupiedCount = 0;
 
             parkingSpots.forEach(spot => {
+                // Si le filtre "places disponibles uniquement" est activé et que la place n'est pas disponible, on ne l'affiche pas
+                if (showOnlyAvailable && !spot.available) {
+                    return;
+                }
+                
                 // Utiliser l'icône appropriée selon la disponibilité
                 const icon = spot.available ? greenIcon : redIcon;
                 
@@ -733,6 +908,71 @@
 
             document.getElementById('available-count').textContent = availableCount;
             document.getElementById('occupied-count').textContent = occupiedCount;
+        }
+
+        function createDistricts() {
+            // Supprimer les anciens quartiers
+            districtLayers.forEach(layer => map.removeLayer(layer));
+            districtLayers = [];
+
+            districts.forEach(district => {
+                // Déterminer la couleur en fonction de l'occupation
+                let color;
+                if (district.occupancy > 0.7) {
+                    color = '#ef4444'; // Rouge pour forte occupation
+                } else if (district.occupancy > 0.4) {
+                    color = '#f59e0b'; // Orange pour occupation moyenne
+                } else {
+                    color = '#10b981'; // Vert pour faible occupation
+                }
+
+                // Créer le rectangle du quartier
+                const rectangle = L.rectangle(district.bounds, {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.2,
+                    weight: 2,
+                    opacity: 0.8
+                }).addTo(map);
+
+                // Ajouter un popup avec les informations du quartier
+                rectangle.bindPopup(`
+                    <div class="popup-content">
+                        <h3>${district.name}</h3>
+                        <p>📊 Taux d'occupation: ${Math.round(district.occupancy * 100)}%</p>
+                        <p>${getOccupancyDescription(district.occupancy)}</p>
+                    </div>
+                `);
+
+                districtLayers.push(rectangle);
+            });
+        }
+
+        function getOccupancyDescription(occupancy) {
+            if (occupancy > 0.7) {
+                return "Forte fréquentation - Peu de places disponibles";
+            } else if (occupancy > 0.4) {
+                return "Fréquentation moyenne - Quelques places disponibles";
+            } else {
+                return "Faible fréquentation - Nombreuses places disponibles";
+            }
+        }
+
+        function toggleDistricts() {
+            const showDistricts = document.getElementById('showDistricts').checked;
+            
+            districtLayers.forEach(layer => {
+                if (showDistricts) {
+                    map.addLayer(layer);
+                } else {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+
+        function toggleAvailableFilter() {
+            showOnlyAvailable = document.getElementById('showOnlyAvailable').checked;
+            displayParkingSpots();
         }
 
         function startNavigation(spotId) {
@@ -909,7 +1149,7 @@
             if (isSimulating) {
                 simulationInterval = setInterval(() => {
                     refreshParkingData();
-                }, 3000);
+                }, 30000);
                 event.target.textContent = '⏸️ Pause';
             } else {
                 clearInterval(simulationInterval);
@@ -989,7 +1229,7 @@
                 },
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
+                    timeout: 100000,
                     maximumAge: 0
                 }
             );
