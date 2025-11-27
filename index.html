@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParkVision - Parking en Temps Réel</title>
+    <title>ParkVision - Navigation</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <style>
         * {
             margin: 0;
@@ -14,11 +15,52 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a1a;
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+        }
+
+        /* Mode navigation - masquer tous les éléments sauf la carte et le bouton d'arrêt */
+        .navigation-mode header,
+        .navigation-mode .controls,
+        .navigation-mode .loading,
+        .navigation-mode .leaflet-control-locate,
+        .navigation-mode .leaflet-control-zoom {
+            display: none !important;
+        }
+
+        .navigation-mode .map-container {
+            margin: 0;
+            border-radius: 0;
+        }
+
+        .navigation-mode .navigation-panel {
+            display: block !important;
+            top: 10px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border: 2px solid #10b981;
+        }
+
+        .navigation-mode .navigation-header h3 {
+            color: #10b981;
+        }
+
+        .navigation-mode .close-btn {
+            color: white;
+        }
+
+        .navigation-mode .stat-value {
+            color: #10b981;
+        }
+
+        .navigation-mode .stat-label {
+            color: #ccc;
         }
 
         header {
@@ -105,6 +147,7 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
         }
 
         #map {
@@ -126,6 +169,7 @@
             z-index: 1000;
             flex-wrap: wrap;
             justify-content: center;
+            transition: all 0.3s ease;
         }
 
         .control-btn {
@@ -154,9 +198,14 @@
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         }
 
+        .control-btn.navigation {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
         .leaflet-popup-content-wrapper {
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            min-width: 250px;
         }
 
         .popup-content h3 {
@@ -190,6 +239,24 @@
             color: #991b1b;
         }
 
+        .navigation-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .navigation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
         .marker-pulse {
             animation: pulse 2s infinite;
         }
@@ -220,6 +287,83 @@
             100% {
                 box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
             }
+        }
+
+        .navigation-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 300px;
+            display: none;
+        }
+
+        .navigation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .navigation-header h3 {
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .navigation-info {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .navigation-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .stop-navigation {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .stop-navigation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
         }
 
         /* Style pour mobile */
@@ -259,6 +403,13 @@
             .map-container {
                 margin: 10px;
                 border-radius: 10px;
+            }
+
+            .navigation-panel {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
             }
         }
 
@@ -308,6 +459,30 @@
             font-size: 12px;
             max-width: 200px;
         }
+
+        /* Style personnalisé pour les contrôles Leaflet */
+        .leaflet-control-locate {
+            background: white;
+            border-radius: 4px;
+            padding: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+        }
+
+        .leaflet-control-locate a {
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333'%3E%3Cpath d='M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z'/%3E%3C/svg%3E");
+            background-size: 16px 16px;
+            background-position: center;
+            background-repeat: no-repeat;
+            width: 30px;
+            height: 30px;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .leaflet-control-locate a:hover {
+            background-color: #f4f4f4;
+        }
     </style>
 </head>
 <body>
@@ -342,11 +517,32 @@
         </div>
     </div>
 
+    <div class="navigation-panel" id="navigationPanel">
+        <div class="navigation-header">
+            <h3>🎯 Navigation en cours</h3>
+        </div>
+        <div class="navigation-info">
+            <p>Destination: <strong id="destinationName">-</strong></p>
+        </div>
+        <div class="navigation-stats">
+            <div class="stat">
+                <div class="stat-value" id="distance">-</div>
+                <div class="stat-label">Distance</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="duration">-</div>
+                <div class="stat-label">Durée</div>
+            </div>
+        </div>
+        <button class="stop-navigation" onclick="stopNavigation()">🛑 Arrêter la navigation</button>
+    </div>
+
     <div id="loading" class="loading" style="display: none;">
         <p>📍 Localisation en cours...</p>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script>
         let map;
         let parkingSpots = [];
@@ -356,6 +552,8 @@
         let userMarker = null;
         let userCircle = null;
         let watchId = null;
+        let routingControl = null;
+        let currentNavigationSpot = null;
 
         // Coordonnées de Liège, Belgique
         const cityCenter = [50.6292, 5.5797];
@@ -374,17 +572,29 @@
                 maxZoom: 19
             }).addTo(map);
 
-            // Ajouter le contrôle de localisation
-            L.control.locate({
-                position: 'topleft',
-                strings: {
-                    title: "Montrer ma position"
+            // Ajouter un contrôle de localisation personnalisé
+            const locateControl = L.Control.extend({
+                options: {
+                    position: 'topleft'
                 },
-                locateOptions: {
-                    maxZoom: 16,
-                    watch: true
+                onAdd: function(map) {
+                    const container = L.DomUtil.create('div', 'leaflet-control-locate');
+                    const link = L.DomUtil.create('a', '', container);
+                    link.href = '#';
+                    link.title = 'Localiser ma position';
+                    link.innerHTML = '📍';
+                    
+                    L.DomEvent.on(link, 'click', function(e) {
+                        L.DomEvent.stopPropagation(e);
+                        L.DomEvent.preventDefault(e);
+                        locateMe();
+                    });
+                    
+                    return container;
                 }
-            }).addTo(map);
+            });
+            
+            map.addControl(new locateControl());
 
             generateParkingSpots();
             displayParkingSpots();
@@ -430,6 +640,23 @@
                 border: 3px solid white;
                 border-radius: 50%;
                 box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+                cursor: pointer;
+            "></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        // Icône pour les places occupées
+        const redIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="
+                width: 20px;
+                height: 20px;
+                background: #ef4444;
+                border: 3px solid white;
+                border-radius: 50%;
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+                cursor: pointer;
             "></div>`,
             iconSize: [20, 20],
             iconAnchor: [10, 10]
@@ -464,8 +691,11 @@
             let occupiedCount = 0;
 
             parkingSpots.forEach(spot => {
+                // Utiliser l'icône appropriée selon la disponibilité
+                const icon = spot.available ? greenIcon : redIcon;
+                
                 const marker = L.marker([spot.lat, spot.lng], { 
-                    icon: spot.available ? greenIcon : null 
+                    icon: icon 
                 }).addTo(map);
 
                 const popupContent = `
@@ -476,10 +706,22 @@
                         <span class="status ${spot.available ? 'available' : 'occupied'}">
                             ${spot.available ? 'Disponible' : 'Occupée'}
                         </span>
+                        ${spot.available ? 
+                            `<button class="navigation-btn" onclick="startNavigation(${spot.id})">
+                                🚗 Naviguer jusqu'ici
+                            </button>` 
+                            : ''
+                        }
                     </div>
                 `;
 
                 marker.bindPopup(popupContent);
+                
+                // Ajouter un événement de clic sur le marqueur lui-même
+                marker.on('click', function() {
+                    marker.openPopup();
+                });
+
                 markers.push(marker);
                 
                 if (spot.available) {
@@ -491,6 +733,98 @@
 
             document.getElementById('available-count').textContent = availableCount;
             document.getElementById('occupied-count').textContent = occupiedCount;
+        }
+
+        function startNavigation(spotId) {
+            const spot = parkingSpots.find(s => s.id === spotId);
+            if (!spot) return;
+
+            // Arrêter toute navigation en cours
+            stopNavigation();
+
+            currentNavigationSpot = spot;
+
+            if (!userMarker) {
+                alert("Veuillez d'abord activer votre localisation");
+                return;
+            }
+
+            const userPos = userMarker.getLatLng();
+
+            // Activer le mode navigation
+            document.body.classList.add('navigation-mode');
+
+            // Créer le contrôle de routage
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userPos.lat, userPos.lng),
+                    L.latLng(spot.lat, spot.lng)
+                ],
+                routeWhileDragging: false,
+                showAlternatives: false,
+                lineOptions: {
+                    styles: [{ color: '#10b981', weight: 8, opacity: 0.9 }]
+                },
+                createMarker: function() { return null; }, // Pas de marqueurs supplémentaires
+                collapsible: false,
+                show: false // Masquer le panneau de contrôle par défaut de Leaflet Routing Machine
+            }).addTo(map);
+
+            // Masquer les autres marqueurs pendant la navigation
+            markers.forEach(marker => {
+                if (marker.getLatLng().lat !== spot.lat || marker.getLatLng().lng !== spot.lng) {
+                    map.removeLayer(marker);
+                }
+            });
+
+            // Mettre à jour le panneau de navigation
+            document.getElementById('destinationName').textContent = spot.name;
+            document.getElementById('navigationPanel').style.display = 'block';
+
+            // Écouter les événements de routage pour mettre à jour les informations
+            routingControl.on('routesfound', function(e) {
+                const routes = e.routes;
+                if (routes && routes.length > 0) {
+                    const route = routes[0];
+                    document.getElementById('distance').textContent = 
+                        (route.summary.totalDistance / 1000).toFixed(1) + ' km';
+                    
+                    const durationMinutes = Math.round(route.summary.totalTime / 60);
+                    document.getElementById('duration').textContent = 
+                        durationMinutes + ' min';
+                }
+            });
+
+            // Recentrer la carte sur l'itinéraire
+            const bounds = L.latLngBounds([
+                [userPos.lat, userPos.lng],
+                [spot.lat, spot.lng]
+            ]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function stopNavigation() {
+            // Désactiver le mode navigation
+            document.body.classList.remove('navigation-mode');
+
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            
+            currentNavigationSpot = null;
+            document.getElementById('navigationPanel').style.display = 'none';
+
+            // Réafficher tous les marqueurs
+            displayParkingSpots();
+
+            // Recentrer sur la position de l'utilisateur si disponible
+            if (userMarker) {
+                const userPos = userMarker.getLatLng();
+                map.setView([userPos.lat, userPos.lng], 15);
+            } else {
+                map.setView(cityCenter, 14);
+            }
         }
 
         function refreshParkingData() {
@@ -623,8 +957,16 @@
                         radius: position.coords.accuracy
                     }).addTo(map);
 
-                    // Centrer la carte sur la position de l'utilisateur
-                    map.setView([lat, lng], 16);
+                    // Si une navigation est en cours, mettre à jour l'itinéraire
+                    if (routingControl && currentNavigationSpot) {
+                        routingControl.setWaypoints([
+                            L.latLng(lat, lng),
+                            L.latLng(currentNavigationSpot.lat, currentNavigationSpot.lng)
+                        ]);
+                    } else if (!document.body.classList.contains('navigation-mode')) {
+                        // Centrer la carte sur la position de l'utilisateur seulement si pas en mode navigation
+                        map.setView([lat, lng], 16);
+                    }
                     
                     loading.style.display = 'none';
                 },
