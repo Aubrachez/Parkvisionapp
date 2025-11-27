@@ -18,6 +18,7 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         header {
@@ -27,6 +28,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .logo {
@@ -55,8 +58,9 @@
 
         .stats {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .stat-item {
@@ -81,6 +85,11 @@
 
         .stat-dot.occupied {
             background: #ef4444;
+        }
+
+        .stat-dot.my-position {
+            background: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
 
         .stat-text {
@@ -115,6 +124,8 @@
             display: flex;
             gap: 15px;
             z-index: 1000;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .control-btn {
@@ -127,6 +138,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 14px;
+            min-width: 120px;
         }
 
         .control-btn:hover {
@@ -136,6 +148,10 @@
 
         .control-btn:active {
             transform: translateY(0);
+        }
+
+        .control-btn.my-location {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         }
 
         .leaflet-popup-content-wrapper {
@@ -169,6 +185,11 @@
             color: #065f46;
         }
 
+        .popup-content .status.occupied {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         .marker-pulse {
             animation: pulse 2s infinite;
         }
@@ -183,6 +204,109 @@
             100% {
                 box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
             }
+        }
+
+        .position-pulse {
+            animation: positionPulse 2s infinite;
+        }
+
+        @keyframes positionPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* Style pour mobile */
+        @media (max-width: 768px) {
+            header {
+                padding: 10px 15px;
+            }
+
+            .logo h1 {
+                font-size: 20px;
+            }
+
+            .stats {
+                gap: 8px;
+            }
+
+            .stat-item {
+                padding: 6px 12px;
+            }
+
+            .stat-text {
+                font-size: 12px;
+            }
+
+            .controls {
+                padding: 12px 20px;
+                gap: 10px;
+                bottom: 15px;
+            }
+
+            .control-btn {
+                padding: 8px 15px;
+                font-size: 12px;
+                min-width: 100px;
+            }
+
+            .map-container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo h1 {
+                font-size: 18px;
+            }
+
+            .stat-item {
+                padding: 4px 10px;
+            }
+
+            .controls {
+                flex-direction: column;
+                width: 90%;
+                padding: 10px;
+            }
+
+            .control-btn {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            text-align: center;
+        }
+
+        .location-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 12px;
+            max-width: 200px;
         }
     </style>
 </head>
@@ -201,6 +325,10 @@
                 <div class="stat-dot occupied"></div>
                 <span class="stat-text"><span id="occupied-count">0</span> Occupées</span>
             </div>
+            <div class="stat-item">
+                <div class="stat-dot my-position"></div>
+                <span class="stat-text">Ma position</span>
+            </div>
         </div>
     </header>
 
@@ -209,8 +337,13 @@
         <div class="controls">
             <button class="control-btn" onclick="refreshParkingData()">🔄 Actualiser</button>
             <button class="control-btn" onclick="findNearestParking()">📍 Plus proche</button>
+            <button class="control-btn my-location" onclick="locateMe()">🎯 Ma position</button>
             <button class="control-btn" onclick="toggleSimulation()">⚡ Simulation</button>
         </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <p>📍 Localisation en cours...</p>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -220,6 +353,9 @@
         let markers = [];
         let simulationInterval;
         let isSimulating = false;
+        let userMarker = null;
+        let userCircle = null;
+        let watchId = null;
 
         // Coordonnées de Liège, Belgique
         const cityCenter = [50.6292, 5.5797];
@@ -230,6 +366,7 @@
                 setTimeout(initMap, 100);
                 return;
             }
+            
             map = L.map('map').setView(cityCenter, 14);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -237,8 +374,23 @@
                 maxZoom: 19
             }).addTo(map);
 
+            // Ajouter le contrôle de localisation
+            L.control.locate({
+                position: 'topleft',
+                strings: {
+                    title: "Montrer ma position"
+                },
+                locateOptions: {
+                    maxZoom: 16,
+                    watch: true
+                }
+            }).addTo(map);
+
             generateParkingSpots();
             displayParkingSpots();
+            
+            // Démarrer la localisation automatique
+            setTimeout(locateMe, 1000);
         }
 
         function generateParkingSpots() {
@@ -283,6 +435,26 @@
             iconAnchor: [10, 10]
         });
 
+        // Icône pour la position de l'utilisateur
+        const userIcon = L.divIcon({
+            className: 'position-pulse',
+            html: `<div style="
+                width: 25px;
+                height: 25px;
+                background: #3b82f6;
+                border: 3px solid white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+            ">📍</div>`,
+            iconSize: [25, 25],
+            iconAnchor: [12, 12]
+        });
+
         function displayParkingSpots() {
             // Supprimer les anciens marqueurs
             markers.forEach(marker => map.removeLayer(marker));
@@ -292,21 +464,25 @@
             let occupiedCount = 0;
 
             parkingSpots.forEach(spot => {
+                const marker = L.marker([spot.lat, spot.lng], { 
+                    icon: spot.available ? greenIcon : null 
+                }).addTo(map);
+
+                const popupContent = `
+                    <div class="popup-content">
+                        <h3>${spot.name}</h3>
+                        <p>📊 Capacité: ${spot.capacity} places</p>
+                        <p>🕐 Mis à jour: ${spot.lastUpdate.toLocaleTimeString('fr-FR')}</p>
+                        <span class="status ${spot.available ? 'available' : 'occupied'}">
+                            ${spot.available ? 'Disponible' : 'Occupée'}
+                        </span>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+                
                 if (spot.available) {
-                    const marker = L.marker([spot.lat, spot.lng], { icon: greenIcon })
-                        .addTo(map);
-
-                    const popupContent = `
-                        <div class="popup-content">
-                            <h3>${spot.name}</h3>
-                            <p>📊 Capacité: ${spot.capacity} places</p>
-                            <p>🕐 Mis à jour: ${spot.lastUpdate.toLocaleTimeString('fr-FR')}</p>
-                            <span class="status available">Disponible</span>
-                        </div>
-                    `;
-
-                    marker.bindPopup(popupContent);
-                    markers.push(marker);
                     availableCount++;
                 } else {
                     occupiedCount++;
@@ -332,21 +508,65 @@
                 return;
             }
 
-            const nearest = availableSpots[Math.floor(Math.random() * availableSpots.length)];
-            map.setView([nearest.lat, nearest.lng], 17, {
-                animate: true,
-                duration: 1
-            });
+            // Si l'utilisateur a partagé sa position, trouver la place la plus proche
+            if (userMarker) {
+                const userPos = userMarker.getLatLng();
+                let nearestSpot = availableSpots[0];
+                let minDistance = getDistance(userPos.lat, userPos.lng, nearestSpot.lat, nearestSpot.lng);
 
-            setTimeout(() => {
-                const marker = markers.find(m => {
-                    const pos = m.getLatLng();
-                    return pos.lat === nearest.lat && pos.lng === nearest.lng;
+                availableSpots.forEach(spot => {
+                    const distance = getDistance(userPos.lat, userPos.lng, spot.lat, spot.lng);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestSpot = spot;
+                    }
                 });
-                if (marker) {
-                    marker.openPopup();
-                }
-            }, 1000);
+
+                map.setView([nearestSpot.lat, nearestSpot.lng], 17, {
+                    animate: true,
+                    duration: 1
+                });
+
+                setTimeout(() => {
+                    const marker = markers.find(m => {
+                        const pos = m.getLatLng();
+                        return pos.lat === nearestSpot.lat && pos.lng === nearestSpot.lng;
+                    });
+                    if (marker) {
+                        marker.openPopup();
+                    }
+                }, 1000);
+            } else {
+                // Sinon, choisir une place aléatoire
+                const nearest = availableSpots[Math.floor(Math.random() * availableSpots.length)];
+                map.setView([nearest.lat, nearest.lng], 17, {
+                    animate: true,
+                    duration: 1
+                });
+
+                setTimeout(() => {
+                    const marker = markers.find(m => {
+                        const pos = m.getLatLng();
+                        return pos.lat === nearest.lat && pos.lng === nearest.lng;
+                    });
+                    if (marker) {
+                        marker.openPopup();
+                    }
+                }, 1000);
+            }
+        }
+
+        // Fonction pour calculer la distance entre deux points (formule de Haversine)
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Rayon de la Terre en km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
         }
 
         function toggleSimulation() {
@@ -363,8 +583,85 @@
             }
         }
 
+        function locateMe() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            if (!navigator.geolocation) {
+                alert("La géolocalisation n'est pas supportée par votre navigateur");
+                loading.style.display = 'none';
+                return;
+            }
+
+            // Arrêter le suivi précédent s'il existe
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+
+            // Démarrer le suivi de position
+            watchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Supprimer l'ancien marqueur s'il existe
+                    if (userMarker) {
+                        map.removeLayer(userMarker);
+                    }
+                    if (userCircle) {
+                        map.removeLayer(userCircle);
+                    }
+
+                    // Ajouter le nouveau marqueur
+                    userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+                    
+                    // Ajouter un cercle de précision
+                    userCircle = L.circle([lat, lng], {
+                        color: '#3b82f6',
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.1,
+                        radius: position.coords.accuracy
+                    }).addTo(map);
+
+                    // Centrer la carte sur la position de l'utilisateur
+                    map.setView([lat, lng], 16);
+                    
+                    loading.style.display = 'none';
+                },
+                function(error) {
+                    loading.style.display = 'none';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert("Vous avez refusé l'accès à votre position");
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert("Information de localisation indisponible");
+                            break;
+                        case error.TIMEOUT:
+                            alert("La demande de localisation a expiré");
+                            break;
+                        default:
+                            alert("Une erreur inconnue s'est produite");
+                            break;
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
         // Initialiser la carte au chargement
         window.addEventListener('load', initMap);
+
+        // Gérer le redimensionnement de la fenêtre
+        window.addEventListener('resize', function() {
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 100);
+        });
     </script>
 </body>
 </html>
