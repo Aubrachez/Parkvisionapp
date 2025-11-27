@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkVision - Parking en Temps Réel</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo h1 {
+            color: #667eea;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+        }
+
+        .stat-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .stat-dot.available {
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .stat-dot.occupied {
+            background: #ef4444;
+        }
+
+        .stat-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            margin: 15px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .popup-content h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .popup-content p {
+            color: #666;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
+        .popup-content .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .popup-content .status.available {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .marker-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🅿️</div>
+            <h1>ParkVision</h1>
+        </div>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-dot available"></div>
+                <span class="stat-text"><span id="available-count">0</span> Disponibles</span>
+            </div>
+            <div class="stat-item">
+                <div class="stat-dot occupied"></div>
+                <span class="stat-text"><span id="occupied-count">0</span> Occupées</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="map-container">
+        <div id="map"></div>
+        <div class="controls">
+            <button class="control-btn" onclick="refreshParkingData()">🔄 Actualiser</button>
+            <button class="control-btn" onclick="findNearestParking()">📍 Plus proche</button>
+            <button class="control-btn" onclick="toggleSimulation()">⚡ Simulation</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let parkingSpots = [];
+        let markers = [];
+        let simulationInterval;
+        let isSimulating = false;
+
+        // Coordonnées de Liège, Belgique
+        const cityCenter = [50.6292, 5.5797];
+
+        // Attendre que Leaflet soit chargé
+        function initMap() {
+            if (typeof L === 'undefined') {
+                setTimeout(initMap, 100);
+                return;
+            }
+            map = L.map('map').setView(cityCenter, 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            generateParkingSpots();
+            displayParkingSpots();
+        }
+
+        function generateParkingSpots() {
+            const spots = [
+                { id: 1, name: "Place Saint-Lambert", lat: 50.6412, lng: 5.5735 },
+                { id: 2, name: "Rue de la Cathédrale", lat: 50.6425, lng: 5.5745 },
+                { id: 3, name: "Boulevard de la Sauvenière", lat: 50.6398, lng: 5.5712 },
+                { id: 4, name: "Rue Pont d'Avroy", lat: 50.6385, lng: 5.5765 },
+                { id: 5, name: "Place de la République", lat: 50.6442, lng: 5.5698 },
+                { id: 6, name: "Rue Féronstrée", lat: 50.6455, lng: 5.5788 },
+                { id: 7, name: "Quai de la Goffe", lat: 50.6472, lng: 5.5825 },
+                { id: 8, name: "Rue Hors-Château", lat: 50.6468, lng: 5.5802 },
+                { id: 9, name: "Place du Marché", lat: 50.6435, lng: 5.5722 },
+                { id: 10, name: "Boulevard d'Avroy", lat: 50.6372, lng: 5.5735 },
+                { id: 11, name: "Rue Léopold", lat: 50.6392, lng: 5.5688 },
+                { id: 12, name: "Place Xavier Neujean", lat: 50.6405, lng: 5.5825 },
+                { id: 13, name: "Rue de la Régence", lat: 50.6418, lng: 5.5668 },
+                { id: 14, name: "Boulevard Piercot", lat: 50.6355, lng: 5.5792 },
+                { id: 15, name: "Rue Saint-Gilles", lat: 50.6448, lng: 5.5742 }
+            ];
+
+            parkingSpots = spots.map(spot => ({
+                ...spot,
+                available: Math.random() > 0.5,
+                capacity: Math.floor(Math.random() * 10) + 5,
+                lastUpdate: new Date()
+            }));
+        }
+
+        // Icône personnalisée pour les places disponibles
+        const greenIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="
+                width: 20px;
+                height: 20px;
+                background: #10b981;
+                border: 3px solid white;
+                border-radius: 50%;
+                box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            "></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        function displayParkingSpots() {
+            // Supprimer les anciens marqueurs
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            let availableCount = 0;
+            let occupiedCount = 0;
+
+            parkingSpots.forEach(spot => {
+                if (spot.available) {
+                    const marker = L.marker([spot.lat, spot.lng], { icon: greenIcon })
+                        .addTo(map);
+
+                    const popupContent = `
+                        <div class="popup-content">
+                            <h3>${spot.name}</h3>
+                            <p>📊 Capacité: ${spot.capacity} places</p>
+                            <p>🕐 Mis à jour: ${spot.lastUpdate.toLocaleTimeString('fr-FR')}</p>
+                            <span class="status available">Disponible</span>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                    availableCount++;
+                } else {
+                    occupiedCount++;
+                }
+            });
+
+            document.getElementById('available-count').textContent = availableCount;
+            document.getElementById('occupied-count').textContent = occupiedCount;
+        }
+
+        function refreshParkingData() {
+            parkingSpots.forEach(spot => {
+                spot.available = Math.random() > 0.4;
+                spot.lastUpdate = new Date();
+            });
+            displayParkingSpots();
+        }
+
+        function findNearestParking() {
+            const availableSpots = parkingSpots.filter(spot => spot.available);
+            if (availableSpots.length === 0) {
+                alert('Aucune place disponible pour le moment');
+                return;
+            }
+
+            const nearest = availableSpots[Math.floor(Math.random() * availableSpots.length)];
+            map.setView([nearest.lat, nearest.lng], 17, {
+                animate: true,
+                duration: 1
+            });
+
+            setTimeout(() => {
+                const marker = markers.find(m => {
+                    const pos = m.getLatLng();
+                    return pos.lat === nearest.lat && pos.lng === nearest.lng;
+                });
+                if (marker) {
+                    marker.openPopup();
+                }
+            }, 1000);
+        }
+
+        function toggleSimulation() {
+            isSimulating = !isSimulating;
+            
+            if (isSimulating) {
+                simulationInterval = setInterval(() => {
+                    refreshParkingData();
+                }, 3000);
+                event.target.textContent = '⏸️ Pause';
+            } else {
+                clearInterval(simulationInterval);
+                event.target.textContent = '⚡ Simulation';
+            }
+        }
+
+        // Initialiser la carte au chargement
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>
