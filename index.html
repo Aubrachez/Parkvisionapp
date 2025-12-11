@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParkVision - Navigation</title>
+    <title>ParkVision - Temps Réel</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <style>
@@ -125,10 +125,6 @@
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
         }
 
-        .stat-dot.occupied {
-            background: #ef4444;
-        }
-
         .stat-dot.my-position {
             background: #3b82f6;
             box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
@@ -198,10 +194,6 @@
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
         }
 
-        .control-btn.navigation {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
-
         .leaflet-popup-content-wrapper {
             border-radius: 10px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
@@ -234,11 +226,6 @@
             color: #065f46;
         }
 
-        .popup-content .status.occupied {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
         .navigation-btn {
             width: 100%;
             padding: 10px;
@@ -255,22 +242,6 @@
         .navigation-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .marker-pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-            }
         }
 
         .position-pulse {
@@ -312,14 +283,6 @@
         .navigation-header h3 {
             color: #667eea;
             font-size: 16px;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #666;
         }
 
         .navigation-info {
@@ -371,40 +334,32 @@
             header {
                 padding: 10px 15px;
             }
-
             .logo h1 {
                 font-size: 20px;
             }
-
             .stats {
                 gap: 8px;
             }
-
             .stat-item {
                 padding: 6px 12px;
             }
-
             .stat-text {
                 font-size: 12px;
             }
-
             .controls {
                 padding: 12px 20px;
                 gap: 10px;
                 bottom: 15px;
             }
-
             .control-btn {
                 padding: 8px 15px;
                 font-size: 12px;
                 min-width: 100px;
             }
-
             .map-container {
                 margin: 10px;
                 border-radius: 10px;
             }
-
             .navigation-panel {
                 top: 10px;
                 right: 10px;
@@ -417,17 +372,14 @@
             .logo h1 {
                 font-size: 18px;
             }
-
             .stat-item {
                 padding: 4px 10px;
             }
-
             .controls {
                 flex-direction: column;
                 width: 90%;
                 padding: 10px;
             }
-
             .control-btn {
                 width: 100%;
                 min-width: auto;
@@ -447,20 +399,6 @@
             text-align: center;
         }
 
-        .location-info {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            font-size: 12px;
-            max-width: 200px;
-        }
-
-        /* Style personnalisé pour les contrôles Leaflet */
         .leaflet-control-locate {
             background: white;
             border-radius: 4px;
@@ -483,87 +421,6 @@
         .leaflet-control-locate a:hover {
             background-color: #f4f4f4;
         }
-
-        /* Nouveaux styles pour les quartiers */
-        .district-controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            z-index: 1000;
-            max-width: 200px;
-        }
-
-        .district-controls h3 {
-            color: #667eea;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .district-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .district-toggle input {
-            margin: 0;
-        }
-
-        .district-toggle label {
-            font-size: 14px;
-            color: #333;
-        }
-
-        .filter-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .filter-toggle input {
-            margin: 0;
-        }
-
-        .filter-toggle label {
-            font-size: 14px;
-            color: #333;
-        }
-
-        .district-legend {
-            margin-top: 10px;
-            font-size: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 5px;
-        }
-
-        .legend-color {
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-        }
-
-        .legend-color.high {
-            background: #ef4444;
-        }
-
-        .legend-color.medium {
-            background: #f59e0b;
-        }
-
-        .legend-color.low {
-            background: #10b981;
-        }
     </style>
 </head>
 <body>
@@ -578,10 +435,6 @@
                 <span class="stat-text"><span id="available-count">0</span> Disponibles</span>
             </div>
             <div class="stat-item">
-                <div class="stat-dot occupied"></div>
-                <span class="stat-text"><span id="occupied-count">0</span> Occupées</span>
-            </div>
-            <div class="stat-item">
                 <div class="stat-dot my-position"></div>
                 <span class="stat-text">Ma position</span>
             </div>
@@ -591,11 +444,10 @@
     <div class="map-container">
         <div id="map"></div>
         <div class="controls">
-            <button class="control-btn" onclick="refreshParkingData()">🔄 Actualiser</button>
+            <button class="control-btn" onclick="fullRefresh()">🔄 Actualiser</button>
             <button class="control-btn" onclick="findNearestParking()">📍 Plus proche</button>
             <button class="control-btn my-location" onclick="locateMe()">🎯 Ma position</button>
-            <button class="control-btn" onclick="toggleSimulation()">⚡ Simulation</button>
-        </div>
+            </div>
     </div>
 
     <div class="navigation-panel" id="navigationPanel">
@@ -628,52 +480,14 @@
         let map;
         let parkingSpots = [];
         let markers = [];
-        let simulationInterval;
-        let isSimulating = false;
         let userMarker = null;
         let userCircle = null;
         let watchId = null;
         let routingControl = null;
         let currentNavigationSpot = null;
-        let districtLayers = [];
-        let showOnlyAvailable = false;
 
         // Coordonnées de Liège, Belgique
         const cityCenter = [50.6292, 5.5797];
-
-        // Définition des quartiers de Liège
-        const districts = [
-            {
-                name: "Centre-ville",
-                bounds: [[50.635, 5.565], [50.645, 5.585]],
-                occupancy: 0.8 // 80% d'occupation
-            },
-            {
-                name: "Outremeuse",
-                bounds: [[50.640, 5.585], [50.650, 5.600]],
-                occupancy: 0.6 // 60% d'occupation
-            },
-            {
-                name: "Guillemins",
-                bounds: [[50.625, 5.565], [50.635, 5.580]],
-                occupancy: 0.7 // 70% d'occupation
-            },
-            {
-                name: "Sainte-Marguerite",
-                bounds: [[50.645, 5.555], [50.655, 5.575]],
-                occupancy: 0.4 // 40% d'occupation
-            },
-            {
-                name: "Bressoux",
-                bounds: [[50.650, 5.590], [50.660, 5.610]],
-                occupancy: 0.5 // 50% d'occupation
-            },
-            {
-                name: "Angleur",
-                bounds: [[50.610, 5.590], [50.625, 5.610]],
-                occupancy: 0.3 // 30% d'occupation
-            }
-        ];
 
         // Attendre que Leaflet soit chargé
         function initMap() {
@@ -715,11 +529,45 @@
 
             generateParkingSpots();
             displayParkingSpots();
-            createDistricts();
             
-            // Démarrer la localisation automatique
-            //setTimeout(locateMe, 1000);
+            // Démarrer la mise à jour aléatoire automatique
+            scheduleNextUpdate();
         }
+
+        // --- NOUVELLE LOGIQUE DE MISE A JOUR AUTOMATIQUE ---
+
+        function scheduleNextUpdate() {
+            // Calculer un temps aléatoire entre 30 secondes (30000ms) et 1 minute (60000ms)
+            const delay = Math.floor(Math.random() * (60000 - 30000 + 1) + 30000);
+            
+            setTimeout(() => {
+                updateRandomSpot();
+                scheduleNextUpdate(); // Relancer le cycle
+            }, delay);
+        }
+
+        function updateRandomSpot() {
+            // 1. Faire disparaître une place (Devient occupée)
+            const availableSpots = parkingSpots.filter(s => s.available);
+            if (availableSpots.length > 0) {
+                const randomFreeIndex = Math.floor(Math.random() * availableSpots.length);
+                availableSpots[randomFreeIndex].available = false;
+                availableSpots[randomFreeIndex].lastUpdate = new Date();
+            }
+
+            // 2. Faire apparaître une place (Devient libre)
+            const occupiedSpots = parkingSpots.filter(s => !s.available);
+            if (occupiedSpots.length > 0) {
+                const randomOccupiedIndex = Math.floor(Math.random() * occupiedSpots.length);
+                occupiedSpots[randomOccupiedIndex].available = true;
+                occupiedSpots[randomOccupiedIndex].lastUpdate = new Date();
+            }
+
+            // Mettre à jour l'affichage
+            displayParkingSpots();
+        }
+
+        // --- FIN NOUVELLE LOGIQUE ---
 
         function generateParkingSpots() {
             const spots = [
@@ -738,7 +586,6 @@
                 { id: 13, name: "Rue de la Régence", lat: 50.6418, lng: 5.5668 },
                 { id: 14, name: "Boulevard Piercot", lat: 50.6355, lng: 5.5792 },
                 { id: 15, name: "Rue Saint-Gilles", lat: 50.6448, lng: 5.5742 },
-                // 25 emplacements supplémentaires à Liège
                 { id: 16, name: "Place Cockerill", lat: 50.6475, lng: 5.5725 },
                 { id: 17, name: "Rue de l'Université", lat: 50.6420, lng: 5.5675 },
                 { id: 18, name: "Quai Mativa", lat: 50.6360, lng: 5.5820 },
@@ -774,7 +621,7 @@
             }));
         }
 
-        // Icône personnalisée pour les places disponibles
+        // Icône pour les places disponibles
         const greenIcon = L.divIcon({
             className: 'custom-marker',
             html: `<div style="
@@ -790,23 +637,7 @@
             iconAnchor: [10, 10]
         });
 
-        // Icône pour les places occupées
-        const redIcon = L.divIcon({
-            className: 'custom-marker',
-            html: `<div style="
-                width: 20px;
-                height: 20px;
-                background: #ef4444;
-                border: 3px solid white;
-                border-radius: 50%;
-                box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-                cursor: pointer;
-            "></div>`,
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-        });
-
-        // Icône pour la position de l'utilisateur
+        // Icône utilisateur
         const userIcon = L.divIcon({
             className: 'position-pulse',
             html: `<div style="
@@ -832,19 +663,15 @@
             markers = [];
 
             let availableCount = 0;
-            let occupiedCount = 0;
 
             parkingSpots.forEach(spot => {
-                // Si le filtre "places disponibles uniquement" est activé et que la place n'est pas disponible, on ne l'affiche pas
-                if (showOnlyAvailable && !spot.available) {
+                // Si la place n'est pas disponible, on ne l'affiche pas
+                if (!spot.available) {
                     return;
                 }
                 
-                // Utiliser l'icône appropriée selon la disponibilité
-                const icon = spot.available ? greenIcon : redIcon;
-                
                 const marker = L.marker([spot.lat, spot.lng], { 
-                    icon: icon 
+                    icon: greenIcon 
                 }).addTo(map);
 
                 const popupContent = `
@@ -852,101 +679,26 @@
                         <h3>${spot.name}</h3>
                         <p>📊 Capacité: ${spot.capacity} places</p>
                         <p>🕐 Mis à jour: ${spot.lastUpdate.toLocaleTimeString('fr-FR')}</p>
-                        <span class="status ${spot.available ? 'available' : 'occupied'}">
-                            ${spot.available ? 'Disponible' : 'Occupée'}
-                        </span>
-                        ${spot.available ? 
-                            `<button class="navigation-btn" onclick="startNavigation(${spot.id})">
-                                🚗 Naviguer jusqu'ici
-                            </button>` 
-                            : ''
-                        }
+                        <span class="status available">Disponible</span>
+                        <button class="navigation-btn" onclick="startNavigation(${spot.id})">
+                            🚗 Naviguer jusqu'ici
+                        </button>
                     </div>
                 `;
 
                 marker.bindPopup(popupContent);
                 
-                // Ajouter un événement de clic sur le marqueur lui-même
                 marker.on('click', function() {
                     marker.openPopup();
                 });
 
                 markers.push(marker);
                 
-                if (spot.available) {
-                    availableCount++;
-                } else {
-                    occupiedCount++;
-                }
+                // On compte uniquement les disponibles
+                availableCount++;
             });
 
             document.getElementById('available-count').textContent = availableCount;
-            document.getElementById('occupied-count').textContent = occupiedCount;
-        }
-
-        function createDistricts() {
-            // Supprimer les anciens quartiers
-            districtLayers.forEach(layer => map.removeLayer(layer));
-            districtLayers = [];
-
-            districts.forEach(district => {
-                // Déterminer la couleur en fonction de l'occupation
-                let color;
-                if (district.occupancy > 0.7) {
-                    color = '#ef4444'; // Rouge pour forte occupation
-                } else if (district.occupancy > 0.4) {
-                    color = '#f59e0b'; // Orange pour occupation moyenne
-                } else {
-                    color = '#10b981'; // Vert pour faible occupation
-                }
-
-                // Créer le rectangle du quartier
-                const rectangle = L.rectangle(district.bounds, {
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.2,
-                    weight: 2,
-                    opacity: 0.8
-                }).addTo(map);
-
-                // Ajouter un popup avec les informations du quartier
-                rectangle.bindPopup(`
-                    <div class="popup-content">
-                        <h3>${district.name}</h3>
-                        <p>📊 Taux d'occupation: ${Math.round(district.occupancy * 100)}%</p>
-                        <p>${getOccupancyDescription(district.occupancy)}</p>
-                    </div>
-                `);
-
-                districtLayers.push(rectangle);
-            });
-        }
-
-        function getOccupancyDescription(occupancy) {
-            if (occupancy > 0.7) {
-                return "Forte fréquentation - Peu de places disponibles";
-            } else if (occupancy > 0.4) {
-                return "Fréquentation moyenne - Quelques places disponibles";
-            } else {
-                return "Faible fréquentation - Nombreuses places disponibles";
-            }
-        }
-
-        function toggleDistricts() {
-            const showDistricts = document.getElementById('showDistricts').checked;
-            
-            districtLayers.forEach(layer => {
-                if (showDistricts) {
-                    map.addLayer(layer);
-                } else {
-                    map.removeLayer(layer);
-                }
-            });
-        }
-
-        function toggleAvailableFilter() {
-            showOnlyAvailable = document.getElementById('showOnlyAvailable').checked;
-            displayParkingSpots();
         }
 
         function startNavigation(spotId) {
@@ -979,9 +731,9 @@
                 lineOptions: {
                     styles: [{ color: '#10b981', weight: 8, opacity: 0.9 }]
                 },
-                createMarker: function() { return null; }, // Pas de marqueurs supplémentaires
+                createMarker: function() { return null; },
                 collapsible: false,
-                show: false // Masquer le panneau de contrôle par défaut de Leaflet Routing Machine
+                show: false
             }).addTo(map);
 
             // Masquer les autres marqueurs pendant la navigation
@@ -995,7 +747,7 @@
             document.getElementById('destinationName').textContent = spot.name;
             document.getElementById('navigationPanel').style.display = 'block';
 
-            // Écouter les événements de routage pour mettre à jour les informations
+            // Écouter les événements de routage
             routingControl.on('routesfound', function(e) {
                 const routes = e.routes;
                 if (routes && routes.length > 0) {
@@ -1009,7 +761,7 @@
                 }
             });
 
-            // Recentrer la carte sur l'itinéraire
+            // Recentrer la carte
             const bounds = L.latLngBounds([
                 [userPos.lat, userPos.lng],
                 [spot.lat, spot.lng]
@@ -1032,7 +784,7 @@
             // Réafficher tous les marqueurs
             displayParkingSpots();
 
-            // Recentrer sur la position de l'utilisateur si disponible
+            // Recentrer sur la position de l'utilisateur
             if (userMarker) {
                 const userPos = userMarker.getLatLng();
                 map.setView([userPos.lat, userPos.lng], 15);
@@ -1041,7 +793,8 @@
             }
         }
 
-        function refreshParkingData() {
+        // Fonction manuelle pour le bouton Actualiser (met tout à jour aléatoirement)
+        function fullRefresh() {
             parkingSpots.forEach(spot => {
                 spot.available = Math.random() > 0.4;
                 spot.lastUpdate = new Date();
@@ -1056,7 +809,7 @@
                 return;
             }
 
-            // Si l'utilisateur a partagé sa position, trouver la place la plus proche
+            // Si l'utilisateur a partagé sa position
             if (userMarker) {
                 const userPos = userMarker.getLatLng();
                 let nearestSpot = availableSpots[0];
@@ -1104,31 +857,15 @@
             }
         }
 
-        // Fonction pour calculer la distance entre deux points (formule de Haversine)
         function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Rayon de la Terre en km
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = 
                 Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             return R * c;
-        }
-
-        function toggleSimulation() {
-            isSimulating = !isSimulating;
-            
-            if (isSimulating) {
-                simulationInterval = setInterval(() => {
-                    refreshParkingData();
-                }, 30000);
-                event.target.textContent = '⏸️ Pause';
-            } else {
-                clearInterval(simulationInterval);
-                event.target.textContent = '⚡ Simulation';
-            }
         }
 
         function locateMe() {
@@ -1141,18 +878,15 @@
                 return;
             }
 
-            // Arrêter le suivi précédent s'il existe
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
             }
 
-            // Démarrer le suivi de position
             watchId = navigator.geolocation.watchPosition(
                 function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     
-                    // Supprimer l'ancien marqueur s'il existe
                     if (userMarker) {
                         map.removeLayer(userMarker);
                     }
@@ -1160,10 +894,8 @@
                         map.removeLayer(userCircle);
                     }
 
-                    // Ajouter le nouveau marqueur
                     userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
                     
-                    // Ajouter un cercle de précision
                     userCircle = L.circle([lat, lng], {
                         color: '#3b82f6',
                         fillColor: '#3b82f6',
@@ -1171,14 +903,12 @@
                         radius: position.coords.accuracy
                     }).addTo(map);
 
-                    // Si une navigation est en cours, mettre à jour l'itinéraire
                     if (routingControl && currentNavigationSpot) {
                         routingControl.setWaypoints([
                             L.latLng(lat, lng),
                             L.latLng(currentNavigationSpot.lat, currentNavigationSpot.lng)
                         ]);
                     } else if (!document.body.classList.contains('navigation-mode')) {
-                        // Centrer la carte sur la position de l'utilisateur seulement si pas en mode navigation
                         map.setView([lat, lng], 16);
                     }
                     
@@ -1209,10 +939,8 @@
             );
         }
 
-        // Initialiser la carte au chargement
         window.addEventListener('load', initMap);
 
-        // Gérer le redimensionnement de la fenêtre
         window.addEventListener('resize', function() {
             setTimeout(() => {
                 map.invalidateSize();
